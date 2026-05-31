@@ -3,15 +3,20 @@ import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 
-class MainShell extends StatelessWidget {
+class MainShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainShell({super.key, required this.navigationShell});
 
   @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
+      body: widget.navigationShell,
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
@@ -35,35 +40,35 @@ class MainShell extends StatelessWidget {
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home_rounded,
                 label: 'Home',
-                isSelected: navigationShell.currentIndex == 0,
+                isSelected: widget.navigationShell.currentIndex == 0,
                 onTap: () => _goToTab(0),
               ),
               _NavItem(
                 icon: Icons.search_outlined,
                 activeIcon: Icons.search_rounded,
                 label: 'Lost',
-                isSelected: navigationShell.currentIndex == 1,
+                isSelected: widget.navigationShell.currentIndex == 1,
                 onTap: () => _goToTab(1),
               ),
               _NavItem(
                 icon: Icons.favorite_outline,
                 activeIcon: Icons.favorite_rounded,
                 label: 'Found',
-                isSelected: navigationShell.currentIndex == 2,
+                isSelected: widget.navigationShell.currentIndex == 2,
                 onTap: () => _goToTab(2),
               ),
               _NavItem(
                 icon: Icons.notifications_outlined,
                 activeIcon: Icons.notifications_rounded,
                 label: 'Alerts',
-                isSelected: navigationShell.currentIndex == 3,
+                isSelected: widget.navigationShell.currentIndex == 3,
                 onTap: () => _goToTab(3),
               ),
               _NavItem(
                 icon: Icons.person_outline,
                 activeIcon: Icons.person_rounded,
                 label: 'Profile',
-                isSelected: navigationShell.currentIndex == 4,
+                isSelected: widget.navigationShell.currentIndex == 4,
                 onTap: () => _goToTab(4),
               ),
             ],
@@ -74,14 +79,15 @@ class MainShell extends StatelessWidget {
   }
 
   void _goToTab(int index) {
-    navigationShell.goBranch(
+    if (index == widget.navigationShell.currentIndex) return;
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 }
 
-class _NavItem extends StatelessWidget {
+class _NavItem extends StatefulWidget {
   final IconData icon;
   final IconData activeIcon;
   final String label;
@@ -97,46 +103,91 @@ class _NavItem extends StatelessWidget {
   });
 
   @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _springController;
+  late Animation<double> _springAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _springController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _springAnimation = CurvedAnimation(
+      parent: _springController,
+      curve: Curves.elasticOut,
+    );
+  }
+
+  @override
+  void didUpdateWidget(_NavItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected && !oldWidget.isSelected) {
+      _springController.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _springController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Expanded(
       child: GestureDetector(
-        onTap: onTap,
+        onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) {
-                  return ScaleTransition(scale: animation, child: child);
-                },
-                child: Icon(
-                  isSelected ? activeIcon : icon,
-                  key: ValueKey(isSelected),
-                  size: 24,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textTertiary,
-                ),
+        child: AnimatedBuilder(
+          animation: _springAnimation,
+          builder: (context, child) {
+            final scale = widget.isSelected
+                ? 1.0 + (0.15 * (1.0 - _springAnimation.value))
+                : 1.0;
+            return Transform.scale(
+              scale: scale,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(scale: animation, child: child);
+                    },
+                    child: Icon(
+                      widget.isSelected ? widget.activeIcon : widget.icon,
+                      key: ValueKey(widget.isSelected),
+                      size: 24,
+                      color: widget.isSelected
+                          ? AppColors.primary
+                          : AppColors.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: widget.isSelected
+                          ? AppColors.primary
+                          : AppColors.textTertiary,
+                      letterSpacing: 0.02,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textTertiary,
-                  letterSpacing: 0.02,
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/constants/mock_data.dart';
 import '../../core/widgets/belong_card.dart';
+import '../../core/animations/spring_animations.dart';
+import 'widgets/profile_header_card.dart';
+import 'widgets/community_impact_card.dart';
+import 'widgets/achievement_showcase.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _scrollController = ScrollController();
 
   @override
@@ -29,10 +34,50 @@ class _HomeScreenState extends State<HomeScreen> {
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
-            // Header
+            // Header with greeting
             SliverToBoxAdapter(child: _buildHeader()),
-            // Stats
-            SliverToBoxAdapter(child: _buildStats()),
+            // Gamification Profile Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  0,
+                ),
+                child: SpringScaleTransition(
+                  beginScale: 0.95,
+                  child: const ProfileHeaderCard(),
+                ),
+              ),
+            ),
+            // Community Impact Card
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  0,
+                ),
+                child: SpringScaleTransition(
+                  beginScale: 0.95,
+                  child: const CommunityImpactCard(),
+                ),
+              ),
+            ),
+            // Achievement Showcase
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  0,
+                ),
+                child: const AchievementShowcase(),
+              ),
+            ),
             // Quick Actions
             SliverToBoxAdapter(child: _buildQuickActions()),
             // Section Header
@@ -115,41 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStats() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.lg,
-        0,
-      ),
-      child: Row(
-        children: [
-          _StatCard(
-            value: '12',
-            label: 'Reported',
-            icon: Icons.report_outlined,
-            color: AppColors.primary,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          _StatCard(
-            value: '8',
-            label: 'Reunited',
-            icon: Icons.favorite_rounded,
-            color: AppColors.success,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          _StatCard(
-            value: '15',
-            label: 'Helped',
-            icon: Icons.diversity_3_rounded,
-            color: AppColors.accent,
           ),
         ],
       ),
@@ -250,43 +260,6 @@ class _HomeScreenState extends State<HomeScreen> {
         children: ItemCategory.values.map((category) {
           return _CategoryChip(category: category);
         }).toList(),
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: BelongCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              value,
-              style: AppTypography.headlineMedium.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(label, style: AppTypography.caption),
-          ],
-        ),
       ),
     );
   }
